@@ -119,6 +119,33 @@ class mcts():
                 bestNodes.append(child)
         return random.choice(bestNodes)
 
+class ismcts(mcts):
+    def isFullyExpandedjudge(self, node):
+        if node.isTerminal:
+            return True
+        actions = node.state.getPossibleActions()
+        if set(actions).issubset(node.children.keys()):
+            return True
+        else:
+            return False
+        
+    def selectNode(self, node):
+        while not node.isTerminal:
+            if self.isFullyExpandedjudge(node):
+                node = self.getBestChild(node, self.explorationConstant)
+            else:
+                return self.expand(node)
+        return node
+
+    def expand(self, node):
+        actions = node.state.getPossibleActions()
+        for action in actions:
+            if action not in node.children:
+                newNode = treeNode(node.state.takeAction(action), node)
+                node.children[action] = newNode
+                return newNode
+
+    
 def trivialPolicy(state):
     return state.getReward()
 
