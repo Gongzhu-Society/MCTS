@@ -97,7 +97,6 @@ class mcts():
                 if len(actions) == len(node.children):
                     node.isFullyExpanded = True
                 return newNode
-
         raise Exception("Should never reach here")
 
     def backpropogate(self, node, reward):
@@ -118,6 +117,71 @@ class mcts():
             elif nodeValue == bestValue:
                 bestNodes.append(child)
         return random.choice(bestNodes)
+
+class ismcts(mcts):
+    # additional function need to be implemented for Gamestate class:
+    # resample()
+    # renew_hidden_information(Gamestate.next_hidden_information())
+    def executeRound(self):
+        # execute a selection-expansion-simulation-backpropagation round
+        # notice that in get best child function, we may not resample hidden information
+        # thus at the beginning of each round, we resample instead
+        self.root.state.resample()
+        node = self.selectNode(self.root)
+        reward = self.rollout(node.state)
+        self.backpropogate(node, reward)
+
+    def isFullyExpandedjudge(self, node):
+        # judge: all actions are a subset of children, then fully expanded
+        if node.isTerminal:
+            return True
+        actions = node.state.getPossibleActions()
+        if set(actions).issubset(node.children.keys()):
+            return True
+        else:
+            return False
+
+    def selectNode(self, node):
+        while not node.isTerminal:
+            if self.isFullyExpandedjudge(node):
+                node = self.getBestChild(node, self.explorationConstant)
+            else:
+                return self.expand(node)
+        return node
+
+    def getBestChild(self, node, explorationValue):
+        # return a node that has already been expanded
+        # however, only possible children in this world can be selected as candidates
+        # also, renew the hidden information of the node returned, using information in node
+        bestValue = float("-inf")
+        bestNodes = []
+        possible_actions = node.state.getPossibleActions()
+        for enfant in node.children.keys():
+            if enfant not in possible_actions:
+                continue
+            child = node.children[enfant]
+            nodeValue = node.state.getCurrentPlayer() * child.totalReward / child.numVisits + explorationValue * math.sqrt(
+                2 * math.log(node.numVisits) / child.numVisits)
+            if nodeValue > bestValue:
+                bestValue = nodeValue
+                bestNodes = [child]
+            elif nodeValue == bestValue:
+                bestNodes.append(child)
+        node_to_return = random.choice(bestNodes)
+        node_to_return.state.renew_hidden_information(node.state.next_hidden_information())
+        return node_to_return
+
+    def expand(self, node):
+        # expand unexplored actions for node
+        actions = node.state.getPossibleActions()
+        for action in actions:
+            if action not in node.children:
+                newNode = treeNode(node.state.takeAction(action), node)
+                node.children[action] = newNode
+                if len(actions) == len(node.children):
+                    node.isFullyExpanded = True
+                return newNode
+        raise Exception("Should never reach here")
 
 def trivialPolicy(state):
     return state.getReward()
