@@ -165,10 +165,10 @@ class ismcts(mcts):
                 2 * math.log(node.numVisits) / child.numVisits)
             if nodeValue > bestValue:
                 bestValue = nodeValue
-                bestNodes = [child]
+                #bestNodes = [child]
                 bestActions = [enfant]
             elif nodeValue == bestValue:
-                bestNodes.append(child)
+                #bestNodes.append(child)
                 bestActions.append(enfant)
         action_sampled = random.choice(bestActions)
         node_to_return = node.children[action_sampled] #random.choice(bestNodes)
