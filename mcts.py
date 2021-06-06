@@ -155,6 +155,7 @@ class ismcts(mcts):
         # also, renew the hidden information of the node returned, using information in node
         bestValue = float("-inf")
         bestNodes = []
+        bestActions = []
         possible_actions = node.state.getPossibleActions()
         for enfant in node.children.keys():
             if enfant not in possible_actions:
@@ -165,15 +166,23 @@ class ismcts(mcts):
             if nodeValue > bestValue:
                 bestValue = nodeValue
                 bestNodes = [child]
+                bestActions = [enfant]
             elif nodeValue == bestValue:
                 bestNodes.append(child)
-        node_to_return = random.choice(bestNodes)
-        node_to_return.state.renew_hidden_information(node.state.next_hidden_information())
+                bestActions.append(enfant)
+        action_sampled = random.choice(bestActions)
+        node_to_return = node.children[action_sampled] #random.choice(bestNodes)
+        node_to_return.state.renew_hidden_information(node.state.next_hidden_information(action_sampled))
+        #print('expanded')
         return node_to_return
 
     def expand(self, node):
         # expand unexplored actions for node
         actions = node.state.getPossibleActions()
+        #print('actions')
+        #print(actions)
+        #print('children')
+        #print(node.children.keys())
         for action in actions:
             if action not in node.children:
                 newNode = treeNode(node.state.takeAction(action), node)
