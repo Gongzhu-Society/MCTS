@@ -173,11 +173,12 @@ class ismcts(mcts):
         action_sampled = random.choice(bestActions)
         node_to_return = node.children[action_sampled] #random.choice(bestNodes)
         node_to_return.state.renew_hidden_information(node.state.next_hidden_information(action_sampled))
-        #print('expanded')
+        #print('get best child')
         return node_to_return
 
     def expand(self, node):
         # expand unexplored actions for node
+        #print('expand')
         actions = node.state.getPossibleActions()
         #print('actions')
         #print(actions)
@@ -187,8 +188,6 @@ class ismcts(mcts):
             if action not in node.children:
                 newNode = treeNode(node.state.takeAction(action), node)
                 node.children[action] = newNode
-                if len(actions) == len(node.children):
-                    node.isFullyExpanded = True
                 return newNode
         raise Exception("Should never reach here")
 
