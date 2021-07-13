@@ -24,6 +24,7 @@ class treeNode():
         self.parent = parent
         self.numVisits = 0
         self.totalReward = 0
+        self.totalRewardsq = 0
         self.children = {}
 
     def __str__(self):
@@ -36,7 +37,7 @@ class treeNode():
 
 class mcts():
     def __init__(self, timeLimit=None, iterationLimit=None, explorationConstant=1 / math.sqrt(2),
-                 rolloutPolicy=randomPolicy):
+                 explorationConstantVar=0,rolloutPolicy=randomPolicy):
         if timeLimit != None:
             if iterationLimit != None:
                 raise ValueError("Cannot have both a time limit and an iteration limit")
@@ -52,6 +53,7 @@ class mcts():
             self.searchLimit = iterationLimit
             self.limitType = 'iterations'
         self.explorationConstant = explorationConstant
+        self.explorationConstantVar = explorationConstantVar
         self.rollout = rolloutPolicy
 
     def search(self, initialState, needDetails=False):
@@ -103,14 +105,21 @@ class mcts():
         while node is not None:
             node.numVisits += 1
             node.totalReward += reward
+            node.totalRewardsq += reward**2
             node = node.parent
 
     def getBestChild(self, node, explorationValue):
         bestValue = float("-inf")
         bestNodes = []
         for child in node.children.values():
-            nodeValue = node.state.getCurrentPlayer() * child.totalReward / child.numVisits + explorationValue * math.sqrt(
-                2 * math.log(node.numVisits) / child.numVisits)
+            if child.numVisits<2:
+                variance = 50
+            else: 
+                variance = child.totalRewardsq / child.numVisits - (child.totalReward / child.numVisits)**2
+                variance /= child.numVisits
+            nodeValue = node.state.getCurrentPlayer() * child.totalReward / child.numVisits 
+            + explorationValue * math.sqrt( 2 * math.log(node.numVisits) / child.numVisits)
+            + self.explorationConstantVar *math.sqrt( 2* variance* math.log(node.numVisits) / child.numVisits)
             if nodeValue > bestValue:
                 bestValue = nodeValue
                 bestNodes = [child]
